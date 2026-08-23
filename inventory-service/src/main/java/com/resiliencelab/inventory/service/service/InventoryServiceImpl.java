@@ -1,11 +1,13 @@
 package com.resiliencelab.inventory.service.service;
 
 import com.resiliencelab.inventory.service.dto.InventoryResponse;
+import com.resiliencelab.inventory.service.dto.ReserveInventoryRequest;
 import com.resiliencelab.inventory.service.entity.Inventory;
 import com.resiliencelab.inventory.service.repository.InventoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 
@@ -22,5 +24,19 @@ public class InventoryServiceImpl implements InventoryService{
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND ,"product not found"));
 
         return InventoryResponse.from(inventory);
+    }
+
+
+    @Transactional
+    public InventoryResponse reserveInventory(String productId, ReserveInventoryRequest request){
+
+        Inventory inventory = inventoryRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND ,"product not found"));
+
+        inventory.reserve(request.quantity());
+
+        return InventoryResponse.from(inventory);
+
+
     }
 }

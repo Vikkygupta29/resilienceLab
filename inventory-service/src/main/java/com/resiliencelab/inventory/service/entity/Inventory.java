@@ -35,6 +35,21 @@ public class Inventory {
         return new Inventory(productId, availableQuantity);
 
     }
+
+    public void reserve(int quantity){
+        if(quantity <= 0){
+            throw new IllegalArgumentException("quantity must be greater than zero");
+        }
+
+        if(availabelQuantity < quantity){
+            throw new IllegalStateException("Insufficient inventory");
+        }
+
+        this.availabelQuantity -= quantity;
+        this.reservedQuantity += quantity;
+    }
+
+
      @PreUpdate
      public void updatedTimeStamp(){
          this.updatedAt = Instant.now();
