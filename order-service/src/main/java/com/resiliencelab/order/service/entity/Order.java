@@ -31,7 +31,7 @@ public class Order {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false,length = 50)
     private OrderStatus status;
 
     @Column(name = "created_at",nullable = false, updatable = false)
