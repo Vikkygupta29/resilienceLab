@@ -28,6 +28,7 @@ public class InventoryController {
             @PathVariable String productId,
             @Valid @RequestBody ReserveInventoryRequest request
     ) {
+
         return ResponseEntity.ok(inventoryService.reserveInventory(productId, request));
     }
 }
