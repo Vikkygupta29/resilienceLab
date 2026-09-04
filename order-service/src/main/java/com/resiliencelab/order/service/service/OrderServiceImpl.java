@@ -1,12 +1,10 @@
 package com.resiliencelab.order.service.service;
 
-
-import com.resiliencelab.order.service.client.InventoryClient;
-import com.resiliencelab.order.service.client.PaymentClient;
+import com.resiliencelab.order.service.dto.event.OrderCreatedEvent;
 import com.resiliencelab.order.service.dto.OrderRequest;
 import com.resiliencelab.order.service.dto.OrderResponse;
 import com.resiliencelab.order.service.entity.Order;
-import com.resiliencelab.order.service.enums.OrderStatus;
+import com.resiliencelab.order.service.messaging.OrderEventProducer;
 import com.resiliencelab.order.service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,60 +19,30 @@ import java.util.UUID;
 public class OrderServiceImpl implements OrderService{
 
     private final OrderRepository orderRepository;
-    private final InventoryClient inventoryClient;
-    private final PaymentClient paymentClient;
-
+    private final OrderEventProducer orderEventProducer;
 
     @Override
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
+
         Order order = Order.create(
                 request.productId(),
                 request.quantity(),
                 request.amount()
         );
 
-    Order savedOrder = orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
 
-    try{
-
-        // reserve inventory
-        inventoryClient.reserveInventory(
+        OrderCreatedEvent event = new OrderCreatedEvent(
+                savedOrder.getId(),
                 savedOrder.getProductId(),
+                savedOrder.getAmount(),
                 savedOrder.getQuantity()
         );
-        savedOrder.setStatus(OrderStatus.INVENTORY_RESERVED);
-        orderRepository.save(savedOrder);
 
-        // 3. Process payment
-        savedOrder.setStatus(OrderStatus.PAYMENT_PROCESSING);
-        orderRepository.save(savedOrder);
+        orderEventProducer.publishOrderCreated(event);
 
-        paymentClient.processPayment(
-                savedOrder.getId(),
-                savedOrder.getAmount()
-        );
-
-        // 4. Confirm order
-        savedOrder.setStatus(OrderStatus.CONFIRMED);
-
-        Order confirmedOrder = orderRepository.save(savedOrder);
-
-        return OrderResponse.from(confirmedOrder);
-
-    } catch (Exception e) {
-        e.printStackTrace();
-
-        savedOrder.setStatus(OrderStatus.FAILED);
-        orderRepository.save(savedOrder);
-
-        throw new ResponseStatusException(
-                HttpStatus.SERVICE_UNAVAILABLE,
-                "Unable to complete order", e
-        );
-
-    }
-
+        return OrderResponse.from(savedOrder);
     }
 
     @Override
