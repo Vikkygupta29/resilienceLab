@@ -6,6 +6,7 @@ import com.resiliencelab.order.service.exception.DownstreamServiceTimeoutExcepti
 import com.resiliencelab.order.service.exception.InventoryServiceUnavailableException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +31,10 @@ public class InventoryClient {
     @Bulkhead(
             name = "inventoryService",
             type = Bulkhead.Type.SEMAPHORE
+    )
+    @RateLimiter(
+            name = "inventoryService",
+            fallbackMethod = "rateLimiterFallback"
     )
     public InventoryResponse reserveInventory(String productId, int quantity) {
 
@@ -77,4 +82,25 @@ public class InventoryClient {
                 throwable
         );
     }
+
+    private InventoryResponse rateLimiterFallback(
+            String productId,
+            int quantity,
+            Throwable throwable) {
+
+        System.out.println(
+                "Rate limiter rejected inventory request for product: "
+                        + productId
+        );
+
+        System.out.println(
+                throwable.getClass().getSimpleName()
+        );
+
+        throw new InventoryServiceUnavailableException(
+                "Inventory request rate limit exceeded",
+                throwable
+        );
+    }
+
 }
