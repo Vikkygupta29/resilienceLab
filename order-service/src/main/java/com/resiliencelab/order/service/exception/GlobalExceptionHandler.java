@@ -15,6 +15,25 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(PaymentServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentServiceUnavailable(
+            PaymentServiceUnavailableException exception,
+            HttpServletRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                "Service Unavailable",
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(errorResponse);
+    }
+
     @ExceptionHandler(InventoryServiceUnavailableException.class)
     public ResponseEntity<ErrorResponse> handleInventoryServiceUnavailable(
             InventoryServiceUnavailableException exception,

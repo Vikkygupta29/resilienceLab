@@ -2,6 +2,9 @@ package com.resiliencelab.order.service.client;
 
 import com.resiliencelab.order.service.dto.client.PaymentRequest;
 import com.resiliencelab.order.service.dto.client.PaymentResponse;
+import com.resiliencelab.order.service.exception.PaymentServiceUnavailableException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -18,6 +21,11 @@ public class PaymentClient {
     @Value("${payment.service.url}")
     private String paymentServiceUrl;
 
+    @CircuitBreaker(
+            name = "paymentService",
+            fallbackMethod = "paymentFallback"
+    )
+    @Retry(name = "paymentService")
     public PaymentResponse processPayment(UUID orderId, BigDecimal amount) {
 
         PaymentRequest request = new PaymentRequest(orderId, amount);
@@ -28,5 +36,24 @@ public class PaymentClient {
                 .retrieve()
                 .body(PaymentResponse.class);
 
+    }
+
+    private PaymentResponse paymentFallback(
+            UUID orderId,
+            BigDecimal amount,
+            Throwable throwable) {
+
+        System.out.println(
+                "Payment service unavailable for order: " + orderId
+        );
+
+        System.out.println(
+                throwable.getClass().getSimpleName()
+        );
+
+        throw new PaymentServiceUnavailableException(
+                "Payment service temporarily unavailable",
+                throwable
+        );
     }
 }

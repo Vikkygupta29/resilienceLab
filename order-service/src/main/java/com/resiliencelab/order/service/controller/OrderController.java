@@ -1,9 +1,11 @@
 package com.resiliencelab.order.service.controller;
 
 import com.resiliencelab.order.service.client.InventoryClient;
+import com.resiliencelab.order.service.client.PaymentClient;
 import com.resiliencelab.order.service.dto.OrderRequest;
 import com.resiliencelab.order.service.dto.OrderResponse;
 import com.resiliencelab.order.service.dto.client.InventoryResponse;
+import com.resiliencelab.order.service.dto.client.PaymentResponse;
 import com.resiliencelab.order.service.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -20,6 +23,7 @@ public class OrderController {
 
     private final OrderService orderService;
     private final InventoryClient inventoryClient;
+    private final PaymentClient paymentClient;
 
     @PostMapping
     ResponseEntity<OrderResponse> create(@Valid @RequestBody OrderRequest request){
@@ -37,6 +41,17 @@ public class OrderController {
 
         return ResponseEntity.ok(
                 inventoryClient.reserveInventory("mouse-1", 1)
+        );
+    }
+
+    @GetMapping("/test-payment")
+    public ResponseEntity<PaymentResponse> testPayment() {
+
+        return ResponseEntity.ok(
+                paymentClient.processPayment(
+                        UUID.randomUUID(),
+                        new BigDecimal("500.00")
+                )
         );
     }
 
