@@ -18,7 +18,7 @@ public class PaymentController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED )
-    public ResponseEntity<PaymentResponse> processPayment(@Valid @RequestBody PaymentRequest request){
+    public ResponseEntity<PaymentResponse> processPayment(@Valid @RequestBody PaymentRequest request) throws InterruptedException {
 
            return ResponseEntity.ok(paymentService.processPayment(request));
     }
