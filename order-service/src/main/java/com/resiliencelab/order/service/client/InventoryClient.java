@@ -2,6 +2,7 @@ package com.resiliencelab.order.service.client;
 
 import com.resiliencelab.order.service.dto.client.InventoryResponse;
 import com.resiliencelab.order.service.dto.client.ReserveInventoryRequest;
+import com.resiliencelab.order.service.exception.InventoryServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class InventoryClient {
                 throwable.getClass().getSimpleName()
         );
 
-        throw new RuntimeException(
+        throw new InventoryServiceUnavailableException(
                 "Inventory service temporarily unavailable",
                 throwable
         );
