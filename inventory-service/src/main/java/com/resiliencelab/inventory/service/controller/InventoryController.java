@@ -30,6 +30,8 @@ public class InventoryController {
             @Valid @RequestBody ReserveInventoryRequest request
     ) throws InterruptedException {
 
-        return ResponseEntity.ok(inventoryService.reserveInventory(productId, request));
+        return ResponseEntity.ok(
+                inventoryService.reserveInventory(productId, request)
+        );
     }
 }
