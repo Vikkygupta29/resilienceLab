@@ -2,12 +2,14 @@ package com.resiliencelab.order.service.client;
 
 import com.resiliencelab.order.service.dto.client.InventoryResponse;
 import com.resiliencelab.order.service.dto.client.ReserveInventoryRequest;
+import com.resiliencelab.order.service.exception.DownstreamServiceTimeoutException;
 import com.resiliencelab.order.service.exception.InventoryServiceUnavailableException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
 @Component
@@ -29,15 +31,23 @@ public class InventoryClient {
         ReserveInventoryRequest request =
                 new ReserveInventoryRequest(quantity);
 
-        return restClient.post()
-                .uri(
-                        inventoryServiceUrl +
-                                "/api/inventory/{productId}/reservations",
-                        productId
-                )
-                .body(request)
-                .retrieve()
-                .body(InventoryResponse.class);
+        try {
+            return restClient.post()
+                    .uri(
+                            inventoryServiceUrl +
+                                    "/api/inventory/{productId}/reservations",
+                            productId
+                    )
+                    .body(request)
+                    .retrieve()
+                    .body(InventoryResponse.class);
+
+        } catch (ResourceAccessException exception) {
+            throw new DownstreamServiceTimeoutException(
+                    "Inventory service request timed out",
+                    exception
+            );
+        }
     }
 
     private InventoryResponse inventoryFallback(
@@ -52,6 +62,10 @@ public class InventoryClient {
         System.out.println(
                 throwable.getClass().getSimpleName()
         );
+
+        if (throwable instanceof DownstreamServiceTimeoutException) {
+            throw (DownstreamServiceTimeoutException) throwable;
+        }
 
         throw new InventoryServiceUnavailableException(
                 "Inventory service temporarily unavailable",

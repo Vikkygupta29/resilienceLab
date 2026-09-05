@@ -15,6 +15,30 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(DownstreamServiceTimeoutException.class)
+    public ResponseEntity<ErrorResponse> handleDownstreamServiceTimeout(
+            DownstreamServiceTimeoutException exception,
+            HttpServletRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.GATEWAY_TIMEOUT.value(),
+                "Gateway Timeout",
+                exception.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.GATEWAY_TIMEOUT)
+                .body(errorResponse);
+    }
+
+
+
+
+
+
     @ExceptionHandler(PaymentServiceUnavailableException.class)
     public ResponseEntity<ErrorResponse> handlePaymentServiceUnavailable(
             PaymentServiceUnavailableException exception,
