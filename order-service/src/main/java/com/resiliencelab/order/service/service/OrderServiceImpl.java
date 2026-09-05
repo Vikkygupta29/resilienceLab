@@ -4,6 +4,7 @@ import com.resiliencelab.order.service.dto.event.OrderCreatedEvent;
 import com.resiliencelab.order.service.dto.OrderRequest;
 import com.resiliencelab.order.service.dto.OrderResponse;
 import com.resiliencelab.order.service.entity.Order;
+import com.resiliencelab.order.service.exception.OrderNotFoundException;
 import com.resiliencelab.order.service.messaging.OrderEventProducer;
 import com.resiliencelab.order.service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +49,7 @@ public class OrderServiceImpl implements OrderService{
     @Override
     public OrderResponse getOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(
-                ()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"order not found")
+                () -> new OrderNotFoundException("order not found")
         );
 
         return OrderResponse.from(order);
